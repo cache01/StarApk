@@ -1,5 +1,6 @@
 package jp.jaxa.iss.kibo.rpc.defaultapk;
 
+import android.graphics.Bitmap;
 import android.util.Log;
 
 import org.opencv.core.Mat;
@@ -30,7 +31,7 @@ public class YourService extends KiboRpcService {
         api.laserControl(false);
 
         //move to s1
-        Point s1 = new Point(0.68068,-8.37976,5.29881);
+        Point s1 = new Point(10.68068,-8.37976,5.29881);
         Quaternion Qs1 = new Quaternion(0, 0, -0.707f, 0.707f);
         MoveTo(s1, Qs1);
 

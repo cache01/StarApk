@@ -1,12 +1,12 @@
 package jp.jaxa.iss.kibo.rpc.defaultapk;
 
+import android.graphics.Bitmap;
 import android.util.Log;
 
 import gov.nasa.arc.astrobee.Kinematics;
 import gov.nasa.arc.astrobee.types.Point;
 import gov.nasa.arc.astrobee.types.Quaternion;
 import jp.jaxa.iss.kibo.rpc.api.KiboRpcService;
-
 /**
  * Class meant to handle commands from the Ground Data System and execute them in Astrobee
  */
@@ -21,16 +21,23 @@ public class YourService extends KiboRpcService {
         specificMoveTo(p1,Q1,true, true, true,true);
 
         api.reportPoint1Arrival();
+        api.laserControl(true);
+        api.takeTarget1Snapshot();
+        api.saveBitmapImage(api.getBitmapDockCam(), "p1 test");
+        api.laserControl(false);
 
         Point p2 = new Point(11.17460, -9.92284, 5.29881);
         Quaternion Q2 = new Quaternion(0, 0, -0.707f, 0.707f);
         specificMoveTo(p2,Q2,true, true, true,true);
-
-        api.reportPoint1Arrival();
+        api.laserControl(true);
+        api.takeTarget2Snapshot();
+        api.saveBitmapImage(api.getBitmapDockCam(), "p2 test");
+        api.laserControl(false);
 
         Point pG = new Point(11.27460, -7.89178, 4.96538);
         Quaternion QG = new Quaternion(0, 0, -0.707f, 0.707f);
         specificMoveTo(pG,QG,true, true, true,true);
+        api.saveBitmapImage(api.getBitmapDockCam(),"Goal test");
 
         api.reportMissionCompletion();
     }

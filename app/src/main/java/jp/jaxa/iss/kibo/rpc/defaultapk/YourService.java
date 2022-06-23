@@ -38,7 +38,7 @@ public class YourService extends KiboRpcService {
         Quaternion QG = new Quaternion(0, 0, -0.707f, 0.707f);
         specificMoveTo(pG,QG,true, true, true,true);
         api.saveBitmapImage(api.getBitmapDockCam(),"Goal test");
-
+        //for git testing
         api.reportMissionCompletion();
     }
 

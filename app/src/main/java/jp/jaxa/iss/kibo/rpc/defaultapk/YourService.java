@@ -59,10 +59,6 @@ public class YourService extends KiboRpcService {
         Point pG = new Point(11.27460, -7.89178, 4.96538);
         MoveTo(pG,QG);
         takePicture("Goal");
-
-        //tack picture
-        Mat imagePG = api.getMatNavCam();
-        api.saveMatImage(imagePG, "Goal");
         
         api.reportMissionCompletion();
     }

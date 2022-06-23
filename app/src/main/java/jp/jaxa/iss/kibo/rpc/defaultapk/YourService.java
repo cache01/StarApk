@@ -54,6 +54,7 @@ public class YourService extends KiboRpcService {
         Quaternion QG = new Quaternion(0, 0, -0.707f, 0.707f);
         MoveTo(p2,QG);
         MoveTo(s1, QG);
+        
         //move to the Goal
         takePicture("Goal");
 

@@ -4,8 +4,9 @@ import android.graphics.Bitmap;
 import android.util.Log;
 
 import org.opencv.core.Mat;
-
+import org.opencv.objdetect.QRCodeDetector;
 import gov.nasa.arc.astrobee.Kinematics;
+import gov.nasa.arc.astrobee.Result;
 import gov.nasa.arc.astrobee.types.Point;
 import gov.nasa.arc.astrobee.types.Quaternion;
 import jp.jaxa.iss.kibo.rpc.api.KiboRpcService;
@@ -53,7 +54,7 @@ public class YourService extends KiboRpcService {
 
         //p2-s2-s1
         Quaternion QG = new Quaternion(0, 0, -0.707f, 0.707f);
-        MoveTo(p2,QG);
+        MoveTo(s2,QG);
         MoveTo(s1, QG);
 
         //move to the Goal
@@ -110,6 +111,36 @@ public class YourService extends KiboRpcService {
         Mat image = api.getMatNavCam();
         api.saveMatImage(image, tag);
     }
+
+//    public static String readQR(Bitmap bitmap) {
+//        try {
+//            int width = bitmap.getWidth();
+//            int height = bitmap.getHeight();
+//            int[] pixel = new int[(width / 2) * (height / 2)];
+//            bitmap.getPixels(pixel,0, width / 2,(width / 4),height / 4, width / 2, height / 2);
+//
+//
+//            Log.d("Time", "before create instance");
+//            QRCodeDetector qrCodeReader = new QRCodeDetector();
+//            Log.d("Time", "after create instance");
+//            Log.d("Time", "before decode");
+//            Result result = qrCodeReader.decode(bitmsp,);
+//            Log.d("Time", "after decode");
+//            if(result.getNumBits() != 0){
+//                Log.d("FINISH", "readQR success");
+//            }
+//            else if(result.getNumBits() == 0){
+//                Log.d("FAIL", "readQR failed");
+//            }
+//            else{
+//                Log.d("404", "readQR error");
+//            }
+//            return result.getText();
+//        } catch (Exception e) {
+//            return null;
+//        }
+//    }
+
 
 
 

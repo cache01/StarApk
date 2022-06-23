@@ -65,7 +65,6 @@ public class YourService extends KiboRpcService {
         //tack picture
         Mat imagePG = api.getMatNavCam();
         api.saveMatImage(imagePG, "Goal");
-        
         api.reportMissionCompletion();
     }
 

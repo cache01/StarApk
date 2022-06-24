@@ -3,7 +3,15 @@ package jp.jaxa.iss.kibo.rpc.defaultapk;
 import android.util.Log;
 
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Rect;
+import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.QRCodeDetector;
+
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+
 import gov.nasa.arc.astrobee.Kinematics;
 import gov.nasa.arc.astrobee.types.Point;
 import gov.nasa.arc.astrobee.types.Quaternion;
@@ -22,10 +30,10 @@ public class YourService extends KiboRpcService {
         Quaternion Q1 = new Quaternion(0f, 0.707f, 0f , 0.707f);
         MoveTo(p1,Q1);
 
-//        MoveTo(new Point(11.71f,-7.7f,4.48f),Q1);
 
         //shot and take picture
         api.reportPoint1Arrival();
+        aim();
         api.laserControl(true);
         api.takeTarget1Snapshot();
         takePicture("target1");
@@ -114,10 +122,52 @@ public class YourService extends KiboRpcService {
         api.saveMatImage(image, tag);
     }
 
-    private  void QRreader(Mat a){
-        QRCodeDetector QR = new QRCodeDetector();
+    public void aim(){
+        api.flashlightControlFront(0.5f);         // 開燈照明
+        Mat img = (api.getMatNavCam());
+        //img = cv2.cvtColor(img, cv2.VOLOR_BGR2GRAY)
 
+        ArrayList<MatOfPoint> contours = new ArrayList<>();
+        Mat hierarchy = new Mat();    // 不重要，照打
+
+        Imgproc.findContours(img, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_NONE);    // 輪廓的資料存入counters
+
+        MatOfPoint2f approxCurve = new MatOfPoint2f();
+
+        double recX = 0;   // 矩形中點x座標
+        double recY = 0;   // 矩形中點y座標
+
+        for (int i = 0; i < contours.size(); i++){
+            MatOfPoint contour = contours.get(i);
+            double area = Imgproc.contourArea(contour);
+
+            if (area > 300){                                                                        // 300要視情況做調整，取出要的圖形面積範圍
+                MatOfPoint2f contour2f = new MatOfPoint2f(contours.get(i).toArray());
+                double approxDistance = Imgproc.arcLength(contour2f, true) * 0.02;                // 0.02 可調整
+                if (approxDistance > 1){                                                          // 不知道要判斷甚麼XD
+                    Imgproc.approxPolyDP(contour2f, approxCurve, approxDistance, true);         // 將結果存到 approxCurve
+                    MatOfPoint points = new MatOfPoint(approxCurve.toArray());                  // 將型態轉回MatOfPOint
+                    if (points.total() == 4 && Math.abs(Imgproc.contourArea(points)) > 500 && Imgproc.isContourConvex(points)){    // 判斷矩形，最後一個不知到是啥?
+                        Rect rect = Imgproc.boundingRect(points);
+                        recX = rect.x + rect.width/2;
+                        recY = rect.y + rect.height/2;
+                    }
+                }
+                break;
+            }
+        }
+
+        double errorX = 480 - recX;
+        double errorY = 640 - recY;
+        Log.println((int) errorY,"errorY","This is errorY");
+        Log.println((int) errorX,"errorX","This is errorX");
+
+        double Z = api.getRobotKinematics().getPosition().getZ();
+        Point PE = new Point(errorX, errorY, Z);
+        Quaternion Q = api.getRobotKinematics().getOrientation();
+        MoveTo(PE, Q);
     }
+
 
 
 

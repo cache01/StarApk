@@ -25,16 +25,16 @@ public class YourService extends KiboRpcService {
     protected void runPlan1(){
         api.startMission();
 
+        double angle = Math.sqrt(2)/2;
+        float angleF = (float)angle;
         //move to point 1
-        Point p1 = new Point(10.71000,-7.70000,4.40000);
-        Quaternion Q1 = new Quaternion(0f, 0.707f, 0f , 0.707f);
-        MoveTo(p1,Q1);
+        Point p1 = new Point(10.71f,-7.76f,4.4f);
+        Quaternion Q1 = new Quaternion(0f, angleF, 0f , angleF);
+        specificMoveTo(p1, Q1, "y");
 
 
         //shot and take picture
         api.reportPoint1Arrival();
-        aim();
-        waiting();
         api.laserControl(true);
         api.takeTarget1Snapshot();
         takePicture("target1");
@@ -42,20 +42,19 @@ public class YourService extends KiboRpcService {
 
         //move to s1
         Point s1 = new Point(10.68068,-8.37976,5.29881);
-        Quaternion Qs1 = new Quaternion(0, 0, -0.707f, 0.707f);
-        MoveTo(s1, Qs1);
+        Quaternion Qs1 = new Quaternion(0, 0, -angleF, angleF);
+        api.moveTo(s1, Qs1, false);
 
         //move to s2
-        Point s2 = new Point(10.79276,-9.9173,5.29881);
-        Quaternion Qs2 = new Quaternion(0, 0, -0.707f, 0.707f);
-        MoveTo(s2, Qs2);
+        Point s2 = new Point(10.79276,-10,5.29881);
+        Quaternion Qs2 = new Quaternion(0, 0, -angleF, angleF);
+        api.moveTo(s2, Qs2, false);
 
         //move to p2
-        Point p2 = new Point(11.17460,-10.00000,5.29881);
-        Quaternion Q2 = new Quaternion(0, 0, -0.707f, 0.707f);
-        MoveTo(p2,Q2);
-        aim();
-        waiting();
+        Point p2 = new Point(11.17460,-10.5,5.29881);
+        Quaternion Q2 = new Quaternion(0, 0, -angleF, angleF);
+        specificMoveTo(p2, Q2, "Z");
+
         //shot and take picture
         api.laserControl(true);
         api.takeTarget2Snapshot();
@@ -63,60 +62,73 @@ public class YourService extends KiboRpcService {
         api.laserControl(false);
 
         //p2-s2-s1
-        Quaternion QG = new Quaternion(0, 0, -0.707f, 0.707f);
-        MoveTo(s2,QG);
-        MoveTo(s1, QG);
+        Quaternion QG = new Quaternion(0, 0, -angleF, angleF);
+        api.moveTo(s2, QG, false);
+        api.moveTo(s1, QG, false);
 
         //move to the Goal
         Point pG = new Point(11.27460, -7.89178, 4.96538);
-        MoveTo(pG,QG);
+        specificMoveTo(pG, QG, "z");
         takePicture("Goal");
         
         api.reportMissionCompletion();
     }
 
 
-    private void MoveTo(Point p, Quaternion q){
-        moveToPID(p, q, false);
-    }
+    private void specificMoveTo (Point p, Quaternion q, String mode){
+        double axile = 0;
+        Point robotPos, output;
+        double tolerance = 0.3d;
+        double error_pos, error_rotate;
+        double error_posX, error_posY, error_posZ;
+        int time1 = 0;
+        int time2 = 0;
+        Log.d("startfrom", api.getRobotKinematics().getPosition().toString());
 
-    private void moveToPID(Point p, Quaternion q, boolean direction){
-        Point robotPose, output;
-        double x, y, z, error, tolerance = 0.33d;
-        int time = 0;
-        Log.d("start from", api.getRobotKinematics().getPosition().toString());
+        api.moveTo(p, q, false);
+        waiting();
+
+        //調整自旋
+        Point P = api.getRobotKinematics().getPosition();
+
         do {
-            if(time == 0){
-                double outputX = p.getX() * 1.006;   //應該是先移到近似位置
-                double outputY = p.getY() * 1.007;   //參數是調出來的
-                double outputZ = p.getZ() * 1.005;
-                output = new Point(outputX, outputY, outputZ);
-            }else{
-                output = p;
+            switch (mode){
+                case "x":
+                    axile = api.getRobotKinematics().getOrientation().getX();
+                    break;
+                case "y":
+                    axile = api.getRobotKinematics().getOrientation().getY();
+                    break;
+                case "z":
+                    axile = api.getRobotKinematics().getOrientation().getZ();
+                    break;
             }
-            Log.d("to", output.toString());
 
-            error = 0;
-            Kinematics kinematics = api.getRobotKinematics();  //得到機器人位置資訊
-            api.moveTo(output, q, true);
-            robotPose = kinematics.getPosition();
-            x = Math.abs(p.getX() - robotPose.getX());   //誤差
-            y = Math.abs(p.getY() - robotPose.getY());
-            z = Math.abs(p.getZ() - robotPose.getZ());
-            error += x;
-            error += y;
-            error += z;
-            if(direction){
-                double w = Math.abs(kinematics.getOrientation().getW() - q.getW()); //面向角度的誤差
-                error += w;
-                tolerance = 0.35d;  //應該是可容忍的誤差(?
-            }
-            ++time;
-            if(time > 1){
-                tolerance *= 1.1;
-            }
-        } while (error > tolerance && time < 2);
+            api.moveTo(P, q, false);
+
+            time1 ++;
+        }while (Math.abs(axile - Math.sqrt(2)/2) > 0.001 && time1 <3);
+
+
+        //調整座標
+        Quaternion Q = api.getRobotKinematics().getOrientation();
+
+        do {
+            double currentX = api.getRobotKinematics().getPosition().getX();
+            double currentY = api.getRobotKinematics().getPosition().getY();
+            double currentZ = api.getRobotKinematics().getPosition().getZ();
+
+            error_pos = Math.abs(p.getX()-currentX) + Math.abs(p.getY()-currentY) + Math.abs(p.getZ()-currentZ);
+            error_posX = Math.abs(p.getX()-currentX);
+            error_posY = Math.abs(p.getY()-currentY);
+            error_posZ = Math.abs(p.getZ()-currentZ);
+
+            api.relativeMoveTo(new Point(error_posX, error_posY, error_posZ), q, false);
+
+            time2 ++;
+        }while(error_pos > tolerance && time2 < 3);
     }
+
 
     private void takePicture(String tag){
         Mat image = api.getMatNavCam();
@@ -166,7 +178,7 @@ public class YourService extends KiboRpcService {
         double Z = api.getRobotKinematics().getPosition().getZ();
         Point PE = new Point(errorX, errorY, Z);
         Quaternion Q = api.getRobotKinematics().getOrientation();
-        MoveTo(PE, Q);
+        api.moveTo(PE, Q, false);
     }
 
     private void waiting() {

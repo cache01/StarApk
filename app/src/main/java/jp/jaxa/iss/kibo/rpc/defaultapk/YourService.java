@@ -22,6 +22,8 @@ public class YourService extends KiboRpcService {
         Quaternion Q1 = new Quaternion(0f, 0.707f, 0f , 0.707f);
         MoveTo(p1,Q1);
 
+//        MoveTo(new Point(11.71f,-7.7f,4.48f),Q1);
+
         //shot and take picture
         api.reportPoint1Arrival();
         api.laserControl(true);
@@ -48,7 +50,7 @@ public class YourService extends KiboRpcService {
         Mat mat = api.getMatNavCam();
         api.laserControl(true);
         api.takeTarget2Snapshot();
-        takePicture("target");
+        takePicture("target2");
         api.laserControl(false);
 
         //p2-s2-s1
@@ -63,6 +65,7 @@ public class YourService extends KiboRpcService {
         
         api.reportMissionCompletion();
     }
+
 
     private void MoveTo(Point p, Quaternion q){
         moveToPID(p, q, false);

@@ -34,6 +34,7 @@ public class YourService extends KiboRpcService {
         //shot and take picture
         api.reportPoint1Arrival();
         aim();
+        waiting();
         api.laserControl(true);
         api.takeTarget1Snapshot();
         takePicture("target1");
@@ -53,9 +54,9 @@ public class YourService extends KiboRpcService {
         Point p2 = new Point(11.17460,-10.00000,5.29881);
         Quaternion Q2 = new Quaternion(0, 0, -0.707f, 0.707f);
         MoveTo(p2,Q2);
-
+        aim();
+        waiting();
         //shot and take picture
-        Mat mat = api.getMatNavCam();
         api.laserControl(true);
         api.takeTarget2Snapshot();
         takePicture("target2");
@@ -168,8 +169,13 @@ public class YourService extends KiboRpcService {
         MoveTo(PE, Q);
     }
 
+    private void waiting() {
+        try {
+            Thread.sleep(200);
+        } catch (Exception ignored) {
+        }
 
-
+    }
 
 
 

@@ -51,7 +51,7 @@ public class YourService extends KiboRpcService {
         api.moveTo(s2, Qs2, false);
 
         //move to p2
-        Point p2 = new Point(11.17460,-10.5,5.29881);
+        Point p2 = new Point(11.21460,-10,5.4625);
         Quaternion Q2 = new Quaternion(0, 0, -angleF, angleF);
         specificMoveTo(p2, Q2, "Z");
 

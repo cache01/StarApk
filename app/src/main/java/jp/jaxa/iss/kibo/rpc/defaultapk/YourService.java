@@ -72,6 +72,14 @@ public class YourService extends KiboRpcService {
         //specificMoveTo(P2, Q2,"z");
         api.moveTo(P2, Q2, false);
         waiting();
+        Mat img = api.getMatNavCam();
+        Mat gray = new Mat();
+        Imgproc.cvtColor(img, gray, Imgproc.COLOR_RGB2GRAY);
+
+        Imgproc.medianBlur(gray, gray, 3);
+        Mat circles = new Mat();
+        Imgproc.HoughCircles(gray, circles, Imgproc.HOUGH_GRADIENT, 1, 0, 300, 30, 40, 70);
+
         try {
             Log.d("The star is at", "aim first time");
             aim("target2");

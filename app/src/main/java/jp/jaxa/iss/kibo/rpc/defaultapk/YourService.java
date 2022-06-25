@@ -19,11 +19,10 @@ public class YourService extends KiboRpcService {
         api.startMission();
         //S1 (10.68068,-8.37976,5.29881)
         //S2 (10.68068,-9.2,5.4325)
+
         //move P1 - S1 - S2 - P2 - S2 - goal position
         double angle = Math.sqrt(2)/2;
-        Point B = new Point(10.71f, -7.76f, 4.5f);
-        Quaternion QB = new Quaternion(0f, (float)angle, 0f, (float)angle);
-        api.moveTo(B, QB, false);
+        
         //move to point 1
         Point P1 = new Point(10.71f, -7.76f, 4.4f);
         //cam(10.71, -7.7, 4.4)

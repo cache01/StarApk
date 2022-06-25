@@ -199,9 +199,9 @@ public class YourService extends KiboRpcService {
         Imgproc.medianBlur(gray, gray, 3);
         Mat circles = new Mat();
         Imgproc.HoughCircles(gray, circles, Imgproc.HOUGH_GRADIENT, 1, 0, 300, 30, 40, 70);
-        List<Integer> radius = new ArrayList<>();
-        List<Double> pixelX = new ArrayList<>();
-        List<Double> pixelY = new ArrayList<>();
+        ArrayList<Integer> radius = new ArrayList<>();
+        ArrayList<Double> pixelX = new ArrayList<>();
+        ArrayList<Double> pixelY = new ArrayList<>();
 
 
         for (int i=0; i < circles.cols(); i++){

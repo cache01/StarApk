@@ -36,6 +36,11 @@ public class YourService extends KiboRpcService {
             aim("target1");
         }catch (Exception ignored){
         }
+        try {
+            Log.d("The star is at", "aim second time");
+            aim("target1");
+        }catch (Exception ignored){
+        }
         waiting();
 
         aimLaser("target1");
@@ -64,6 +69,12 @@ public class YourService extends KiboRpcService {
         api.moveTo(P2, Q2, false);
         waiting();
 
+        try {
+            Log.d("The star is at", "aim first time");
+            aim("target2");
+        }catch (Exception ignored){
+        }
+        waiting();
         try {
             Log.d("The star is at", "aim first time");
             aim("target2");
@@ -117,7 +128,7 @@ public class YourService extends KiboRpcService {
             api.moveTo(P, q, false);
             time1++;
         } while (Math.abs(axile - Math.sqrt(2) / 2) > 0.001 && time1 < 3);
-        //èa¿æ ́åo§æ ̈
+
         Quaternion Q = api.getRobotKinematics().getOrientation();
         do {
             double currentX = api.getRobotKinematics().getPosition().getX();

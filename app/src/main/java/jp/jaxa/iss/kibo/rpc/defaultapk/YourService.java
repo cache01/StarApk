@@ -241,8 +241,8 @@ public class YourService extends KiboRpcService {
                 api.relativeMoveTo(pj1, qj1, false);
                 break;
             case "target2":
-                Point pj2 = new Point(-0.1,
-                        api.getRobotKinematics().getPosition().getY(), 0.05);
+                Point pj2 = new Point(-0.08,
+                        api.getRobotKinematics().getPosition().getY(), 0.07);
                 Quaternion qj2 = api.getRobotKinematics().getOrientation();
                 api.relativeMoveTo(pj2, qj2, false);
                 break;

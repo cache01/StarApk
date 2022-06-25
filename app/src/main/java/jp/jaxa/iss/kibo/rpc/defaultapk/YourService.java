@@ -2,6 +2,7 @@ package jp.jaxa.iss.kibo.rpc.defaultapk;
 
 import android.util.Log;
 import org.opencv.core.Mat;
+import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,14 +51,14 @@ public class YourService extends KiboRpcService {
 
         //move to S1
         //Point S1 = new Point(10.68068,-8.37976,5.29881);
-        Point S1 = new Point(10.55068,-8.37976,5.29881);
+        Point S1 = new Point(10.55068,-8.37976,5.4325);
         Quaternion QS1 = new Quaternion(0f, 0f, (float)-angle, (float)angle);
         api.moveTo(S1, QS1, false);
         //MoveTo(S1, QS1,"z");
 
         //move to S2
         //Point S2 = new Point(10.79276,-10,5.29981);
-        Point S2 = new Point(10.55068,-9.2,5.4325);
+        Point S2 = new Point(10.55068,-9.35,5.4325);
         Quaternion QS2 = new Quaternion(0f, 0f, (float)-angle, (float)angle);
         api.moveTo(S2, QS2, false);
         //MoveTo(S2,QS2,"z");
@@ -66,6 +67,7 @@ public class YourService extends KiboRpcService {
         Point P2 = new Point(11.21360,-10,5.4325);
         //11.17460,     ,5.29881
         Quaternion Q2 = new Quaternion(0f, 0f, (float)-angle, (float)angle);
+        specificMoveTo(P2,Q2,"z");
         api.moveTo(P2, Q2, false);
         waiting();
 
@@ -99,13 +101,13 @@ public class YourService extends KiboRpcService {
         //api.moveTo(S1, QG, false);
         //MoveTo(S2, QG,"z");
         //MoveTo(S1, QG,"z");
+
         //move to gaol position
         Point PG = new Point(11.27460, -7.89178, 4.96538);
         api.moveTo(PG, QG, false);
         takePicture("goal");
         api.reportMissionCompletion();
     }
-
 
     private void specificMoveTo (Point p, Quaternion q, String mode) {
         double axile = 0;
@@ -134,7 +136,6 @@ public class YourService extends KiboRpcService {
             api.moveTo(P, q, false);
             time1++;
         } while (Math.abs(axile - Math.sqrt(2) / 2) > 0.001 && time1 < 3);
-
         Quaternion Q = api.getRobotKinematics().getOrientation();
         do {
             double currentX = api.getRobotKinematics().getPosition().getX();
@@ -145,12 +146,11 @@ public class YourService extends KiboRpcService {
             error_posX = Math.abs(p.getX() - currentX);
             error_posY = Math.abs(p.getY() - currentY);
             error_posZ = Math.abs(p.getZ() - currentZ);
-            api.relativeMoveTo(new Point(error_posX, error_posY, error_posZ), q,
+            api.relativeMoveTo(new Point(error_posX, error_posY, error_posZ), Q,
                     false);
             time2 ++;
         }while(error_pos > tolerance && time2 < 3);
     }
-
 
     private void takePicture(String tag) {
         Mat image = api.getMatNavCam();
@@ -182,21 +182,24 @@ public class YourService extends KiboRpcService {
         Mat img = api.getMatNavCam();
         Mat gray = new Mat();
         Imgproc.cvtColor(img, gray, Imgproc.COLOR_RGB2GRAY);
+        Imgproc.medianBlur(gray, gray, 3);
         Mat circles = new Mat();
-        Imgproc.HoughCircles(gray, circles, Imgproc.HOUGH_GRADIENT, 1, 100, 440,
-                50, 0, 345);
+        Imgproc.HoughCircles(gray, circles, Imgproc.HOUGH_GRADIENT, 1, 0, 3000, 30, 0, 70);
         List<Integer> radius = new ArrayList<>();
         List<Double> pixelX = new ArrayList<>();
         List<Double> pixelY = new ArrayList<>();
 
-        for (int i=0;
-             i < circles.cols();
-             i++){
+
+        for (int i=0; i < circles.cols(); i++){
             double[] vCircle = circles.get(0, i);
             pixelX.add(vCircle[0]);
             pixelY.add(vCircle[1]);
             radius.add((int)Math.round(vCircle[2]));
             Log.d("The star is at", "find" + i + "circles");
+            org.opencv.core.Point center = new org.opencv.core.Point(vCircle[0],vCircle[1]);
+            int Radius = (int) Math.round(vCircle[2]);
+            Imgproc.circle(circles, center, Radius, new Scalar(0, 255, 0), 3, 8, 0);
+            api.saveMatImage(circles, "gray");
         }
 
         int max_radius = radius.get(0);
@@ -210,6 +213,8 @@ public class YourService extends KiboRpcService {
                 Log.d("The star is at", "radius = " + max_radius);
             }
         }
+
+
 
         double proportion = max_radius / 0.05 ;
         double errorX = (pixelX.get(index) - 640) / proportion;
@@ -238,6 +243,7 @@ public class YourService extends KiboRpcService {
 
 
     }
+
     private void aimLaser(String mode) {
         switch (mode) {
             case "target1":

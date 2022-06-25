@@ -50,14 +50,14 @@ public class YourService extends KiboRpcService {
 
         //move to S1
         //Point S1 = new Point(10.68068,-8.37976,5.29881);
-        Point S1 = new Point(10.68068,-8.37976,5.29881);
+        Point S1 = new Point(10.55068,-8.37976,5.29881);
         Quaternion QS1 = new Quaternion(0f, 0f, (float)-angle, (float)angle);
         api.moveTo(S1, QS1, false);
         //MoveTo(S1, QS1,"z");
 
         //move to S2
         //Point S2 = new Point(10.79276,-10,5.29981);
-        Point S2 = new Point(10.68068,-9.2,5.4325);
+        Point S2 = new Point(10.55068,-9.2,5.4325);
         Quaternion QS2 = new Quaternion(0f, 0f, (float)-angle, (float)angle);
         api.moveTo(S2, QS2, false);
         //MoveTo(S2,QS2,"z");
@@ -69,6 +69,12 @@ public class YourService extends KiboRpcService {
         api.moveTo(P2, Q2, false);
         waiting();
 
+        try {
+            Log.d("The star is at", "aim first time");
+            aim("target2");
+        }catch (Exception ignored){
+        }
+        waiting();
         try {
             Log.d("The star is at", "aim first time");
             aim("target2");

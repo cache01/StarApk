@@ -198,7 +198,7 @@ public class YourService extends KiboRpcService {
         Imgproc.cvtColor(img, gray, Imgproc.COLOR_RGB2GRAY);
         Imgproc.medianBlur(gray, gray, 3);
         Mat circles = new Mat();
-        Imgproc.HoughCircles(gray, circles, Imgproc.HOUGH_GRADIENT, 1, 0, 3000, 30, 0, 70);
+        Imgproc.HoughCircles(gray, circles, Imgproc.HOUGH_GRADIENT, 1, 0, 300, 30, 40, 70);
         List<Integer> radius = new ArrayList<>();
         List<Double> pixelX = new ArrayList<>();
         List<Double> pixelY = new ArrayList<>();
@@ -206,14 +206,10 @@ public class YourService extends KiboRpcService {
 
         for (int i=0; i < circles.cols(); i++){
             double[] vCircle = circles.get(0, i);
-            pixelX.add(vCircle[0]);
-            pixelY.add(vCircle[1]);
+            pixelX.add(new Double(vCircle[0]));
+            pixelY.add(new Double(vCircle[1]));
             radius.add((int)Math.round(vCircle[2]));
-            Log.d("The star is at", "find" + i + "circles");
-            org.opencv.core.Point center = new org.opencv.core.Point(vCircle[0],vCircle[1]);
-            int Radius = (int) Math.round(vCircle[2]);
-            Imgproc.circle(circles, center, Radius, new Scalar(0, 255, 0), 3, 8, 0);
-            api.saveMatImage(circles, "gray");
+
         }
 
         int max_radius = radius.get(0);

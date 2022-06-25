@@ -18,65 +18,78 @@ public class YourService extends KiboRpcService {
     protected void runPlan1(){
         api.startMission();
 
+        //S1 (10.68068,-8.37976,5.29881)
+        //S2 (10.68068,-9.2,5.4325)
+        //move P1 - S1 - S2 - P2 - S2 - goal position
+
         double angle = Math.sqrt(2)/2;
-        float angleF = (float)angle;
+
+        Point B = new Point(10.71f, -7.76f, 4.5f);
+        Quaternion QB = new Quaternion(0f, (float)angle, 0f, (float)angle);
+        api.moveTo(B, QB, false);
 
         //move to point 1
-        Point p1 = new Point(10.71f,-7.76f,4.4f);
-        Quaternion Q1 = new Quaternion(0f, angleF, 0f , angleF);
-        specificMoveTo(p1, Q1, "y");
+        Point P1 = new Point(10.71f, -7.76f, 4.4f);   //cam(10.71, -7.7, 4.4)
+        Quaternion Q1 = new Quaternion(0f, (float)angle, 0f, (float)angle);
+        specificMoveTo(P1, Q1, "y");
 
         //shot and take picture
         api.reportPoint1Arrival();
         api.laserControl(true);
-        takePicture("target1");
         api.takeTarget1Snapshot();
+        takePicture("target_1");
         api.laserControl(false);
 
-        //move to s1
-        Point s1 = new Point(10.68068,-8.37976,5.29881);
-        Quaternion Qs1 = new Quaternion(0, 0, -angleF, angleF);
-        api.moveTo(s1, Qs1, false);
+        //move to S1
+        //Point S1 = new Point(10.68068,-8.37976,5.29881);
+        Point S1 = new Point(10.68068,-8.37976,5.29881);
+        Quaternion QS1 = new Quaternion(0f, 0f, (float)-angle, (float)angle);
+        api.moveTo(S1, QS1, false);
+        //MoveTo(S1, QS1,"z");
 
-        //move to s2
-        Point s2 = new Point(10.79276,-10,5.29881);
-        Quaternion Qs2 = new Quaternion(0, 0, -angleF, angleF);
-        api.moveTo(s2, Qs2, false);
+        //move to S2
+        //Point S2 = new Point(10.79276,-10,5.29981);
+        Point S2 = new Point(10.68068,-9.2,5.4325);
+        Quaternion QS2 = new Quaternion(0f, 0f, (float)-angle, (float)angle);
+        api.moveTo(S2, QS2, false);
+        //MoveTo(S2,QS2,"z");
 
-        //move to p2
-        Point p2 = new Point(10.68068,-9.2,5.4325);
-        Quaternion Q2 = new Quaternion(0, 0, -angleF, angleF);
-        specificMoveTo(p2, Q2, "Z");
+        //move to point 2
+        Point P2 = new Point(11.21360,-10,5.4325);  //11.17460,     ,5.29881
+        Quaternion Q2 = new Quaternion(0f, 0f, (float)-angle, (float)angle);
+        specificMoveTo(P2, Q2,"z");
         waiting();
-
-        try{
-            aim();
-        }catch (Exception ignored){}
-        waiting();;
         try {
             aim();
-        }catch(Exception ignored){}
-
+        }catch (Exception ignored){
+        }
+        waiting();
+        try {
+            aim();
+        }catch (Exception ignored){
+        }
         waiting();
         aimLaser();
         waiting();
 
         //shot and take picture
         api.laserControl(true);
-        takePicture("target2");
         api.takeTarget2Snapshot();
+        takePicture("target_2");
         api.laserControl(false);
 
-        //p2-s2-s1
-        Quaternion QG = new Quaternion(0, 0, -angleF, angleF);
-        api.moveTo(s2, QG, false);
-        api.moveTo(s1, QG, false);
+        //p2 - s2 - s1
+        Quaternion QG = new Quaternion(0f, 0f, (float)-angle, (float)angle);
+        api.moveTo(S2, QG, false);
+        //api.moveTo(S1, QG, false);
+        //MoveTo(S2, QG,"z");
+        //MoveTo(S1, QG,"z");
 
-        //move to the Goal
-        Point pG = new Point(11.27460, -7.89178, 4.96538);
-        specificMoveTo(pG, QG, "z");
-        takePicture("Goal");
-        
+        //move to gaol position
+        Point PG = new Point(11.27460, -7.89178, 4.96538);
+        specificMoveTo(PG, QG,"z");
+        takePicture("goal");
+
         api.reportMissionCompletion();
     }
 
@@ -140,18 +153,15 @@ public class YourService extends KiboRpcService {
         Mat image = api.getMatNavCam();
         api.saveMatImage(image, tag);
     }
-
-    public void aim(){
+    private void aim(){
         Mat img = api.getMatNavCam();
-        Mat cut = img.submat(640,960,0,1280);
         Mat gray = new Mat();
-
-        takePicture("when aiming");
-
         Imgproc.cvtColor(img, gray, Imgproc.COLOR_RGB2GRAY);
+
+        //可以多些處理，使準度提高
+
         Mat circles = new Mat();
         Imgproc.HoughCircles(gray, circles, Imgproc.HOUGH_GRADIENT, 1, 100, 440, 50, 0, 345);
-
         //dp: 檢測圓心的累加器圖像與源圖像之間的比值倒數
         //minDist：檢測到的圓的圓心之間的最小距離
         //param1：method設置的檢測方法對應參數，針對HOUGH_GRADIENT，表示邊緣檢測算子的高閾值（低閾值是高閾值的一半），默認值100
@@ -160,22 +170,22 @@ public class YourService extends KiboRpcService {
         //maxRadius：圓半徑的最大半徑，默認為0（若minRadius和maxRadius都默認為0，則HoughCircles函數會自動計算半徑）
 
         List<Integer> radius = new ArrayList<>();
-        List<Double> pixelX = new ArrayList<>();
-        List<Double> pixelY = new ArrayList<>();
+        List<Double> pixelX = new ArrayList();
+        List<Double> pixelY = new ArrayList();
 
-        for(int i = 0; i<circles.cols();i++){
-            double [] vCircles = circles.get(0, 1);
+        for (int i=0; i < circles.cols(); i++){
+            double[] vCircle = circles.get(0, i);
 
-            pixelX.add(vCircles[0]);
-            pixelY.add(vCircles[1]);
-            radius.add((int)Math.round(vCircles[2]));
+            pixelX.add(vCircle[0]);
+            pixelY.add(vCircle[1]);
+            radius.add((int)Math.round(vCircle[2]));
         }
 
         int max_radius = radius.get(0);
         int index = 0;
 
-        for(int i = 0;i < radius.size();i++){
-            if(max_radius<radius.get(i)){
+        for (int i=0; i < radius.size(); i++){
+            if (max_radius < radius.get(i)) {
                 max_radius = radius.get(i);
                 index = i;
             }
@@ -188,9 +198,9 @@ public class YourService extends KiboRpcService {
         double x = errorX;
         double y = api.getRobotKinematics().getPosition().getY();
         double z = errorY;
-        Point pi = new Point(x, y, z);
-        Quaternion qi = api.getRobotKinematics().getOrientation();
-        api.relativeMoveTo(pi, qi, false);
+        Point p = new Point(x, y, z);
+        Quaternion q = api.getRobotKinematics().getOrientation();
+        api.relativeMoveTo(p, q, false);
 
     }
 
@@ -203,10 +213,9 @@ public class YourService extends KiboRpcService {
     }
 
     private void aimLaser(){
-        Point pi = new Point(0.1, api.getRobotKinematics().getPosition().getY(), -0.05);
-        Quaternion qi = api.getRobotKinematics().getOrientation();
-        api.relativeMoveTo(pi, qi, false);
-        takePicture("when shooting");
+        Point pj = new Point(0.1, api.getRobotKinematics().getPosition().getY(), -0.05);
+        Quaternion qj = api.getRobotKinematics().getOrientation();
+        api.relativeMoveTo(pj, qj, false);
     }
 
 

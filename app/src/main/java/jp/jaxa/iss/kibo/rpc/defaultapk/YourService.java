@@ -2,9 +2,6 @@ package jp.jaxa.iss.kibo.rpc.defaultapk;
 
 import android.util.Log;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint;
-import org.opencv.core.MatOfPoint2f;
-import org.opencv.core.Rect;
 import org.opencv.imgproc.Imgproc;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,8 +29,8 @@ public class YourService extends KiboRpcService {
         //shot and take picture
         api.reportPoint1Arrival();
         api.laserControl(true);
-        api.takeTarget1Snapshot();
         takePicture("target1");
+        api.takeTarget1Snapshot();
         api.laserControl(false);
 
         //move to s1
@@ -47,7 +44,7 @@ public class YourService extends KiboRpcService {
         api.moveTo(s2, Qs2, false);
 
         //move to p2
-        Point p2 = new Point(11.21360,-10,5.4325);
+        Point p2 = new Point(10.68068,-9.2,5.4325);
         Quaternion Q2 = new Quaternion(0, 0, -angleF, angleF);
         specificMoveTo(p2, Q2, "Z");
         waiting();
@@ -55,15 +52,19 @@ public class YourService extends KiboRpcService {
         try{
             aim();
         }catch (Exception ignored){}
-
         waiting();;
-        aimLaser();;
+        try {
+            aim();
+        }catch(Exception ignored){}
+
+        waiting();
+        aimLaser();
         waiting();
 
         //shot and take picture
         api.laserControl(true);
-        api.takeTarget2Snapshot();
         takePicture("target2");
+        api.takeTarget2Snapshot();
         api.laserControl(false);
 
         //p2-s2-s1
@@ -142,16 +143,15 @@ public class YourService extends KiboRpcService {
 
     public void aim(){
         Mat img = api.getMatNavCam();
+        Mat cut = img.submat(640,960,0,1280);
         Mat gray = new Mat();
 
         takePicture("when aiming");
 
         Imgproc.cvtColor(img, gray, Imgproc.COLOR_RGB2GRAY);
-        api.saveMatImage(img, "src");
-        api.saveMatImage(gray, "gray image");
         Mat circles = new Mat();
         Imgproc.HoughCircles(gray, circles, Imgproc.HOUGH_GRADIENT, 1, 100, 440, 50, 0, 345);
-        api.saveMatImage(circles, "after Hough");
+
         //dp: 檢測圓心的累加器圖像與源圖像之間的比值倒數
         //minDist：檢測到的圓的圓心之間的最小距離
         //param1：method設置的檢測方法對應參數，針對HOUGH_GRADIENT，表示邊緣檢測算子的高閾值（低閾值是高閾值的一半），默認值100
@@ -188,9 +188,9 @@ public class YourService extends KiboRpcService {
         double x = errorX;
         double y = api.getRobotKinematics().getPosition().getY();
         double z = errorY;
-        Point p = new Point(x, y, z);
-        Quaternion q = api.getRobotKinematics().getOrientation();
-        api.relativeMoveTo(p, q, false);
+        Point pi = new Point(x, y, z);
+        Quaternion qi = api.getRobotKinematics().getOrientation();
+        api.relativeMoveTo(pi, qi, false);
 
     }
 
@@ -206,6 +206,7 @@ public class YourService extends KiboRpcService {
         Point pi = new Point(0.1, api.getRobotKinematics().getPosition().getY(), -0.05);
         Quaternion qi = api.getRobotKinematics().getOrientation();
         api.relativeMoveTo(pi, qi, false);
+        takePicture("when shooting");
     }
 
 

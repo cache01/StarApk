@@ -39,6 +39,7 @@ public class YourService extends KiboRpcService {
         waiting();
 
         aimLaser("target1");
+        Laser("target1");
         takePicture("target1");
         waiting();
 
@@ -71,6 +72,7 @@ public class YourService extends KiboRpcService {
         waiting();
 
         aimLaser("target2");
+        Laser("target2");
         takePicture("target2");
         waiting();
 
@@ -234,8 +236,6 @@ public class YourService extends KiboRpcService {
                 api.relativeMoveTo(pj2, qj2, false);
                 break;
         }
-        Laser(mode);
-
     }
 
 

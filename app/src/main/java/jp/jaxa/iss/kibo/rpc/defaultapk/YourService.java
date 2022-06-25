@@ -7,6 +7,8 @@ import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Rect;
 import org.opencv.imgproc.Imgproc;
 import java.util.ArrayList;
+import java.util.List;
+
 import gov.nasa.arc.astrobee.types.Point;
 import gov.nasa.arc.astrobee.types.Quaternion;
 import jp.jaxa.iss.kibo.rpc.api.KiboRpcService;
@@ -21,11 +23,11 @@ public class YourService extends KiboRpcService {
 
         double angle = Math.sqrt(2)/2;
         float angleF = (float)angle;
+
         //move to point 1
         Point p1 = new Point(10.71f,-7.76f,4.4f);
         Quaternion Q1 = new Quaternion(0f, angleF, 0f , angleF);
         specificMoveTo(p1, Q1, "y");
-
 
         //shot and take picture
         api.reportPoint1Arrival();
@@ -45,9 +47,10 @@ public class YourService extends KiboRpcService {
         api.moveTo(s2, Qs2, false);
 
         //move to p2
-        Point p2 = new Point(11.21460,-10,5.4625);
+        Point p2 = new Point(11.21360,-10,5.4325);
         Quaternion Q2 = new Quaternion(0, 0, -angleF, angleF);
         specificMoveTo(p2, Q2, "Z");
+        waiting();
 
         //shot and take picture
         api.laserControl(true);
@@ -130,49 +133,56 @@ public class YourService extends KiboRpcService {
     }
 
     public void aim(){
-        api.flashlightControlFront(0.5f);         // 開燈照明
-        Mat img = (api.getMatNavCam());
-        //img = cv2.cvtColor(img, cv2.VOLOR_BGR2GRAY)
+        Mat img = api.getMatNavCam();
+        Mat gray = new Mat();
 
-        ArrayList<MatOfPoint> contours = new ArrayList<>();
-        Mat hierarchy = new Mat();    // 不重要，照打
+        takePicture("aiming");
 
-        Imgproc.findContours(img, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_NONE);    // 輪廓的資料存入counters
+        Imgproc.cvtColor(img, gray, Imgproc.COLOR_RGB2GRAY);
 
-        MatOfPoint2f approxCurve = new MatOfPoint2f();
+        Mat circles = new Mat();
+        Imgproc.HoughCircles(gray, circles, Imgproc.HOUGH_GRADIENT, 1, 100, 440, 50, 0, 345);
 
-        double recX = 0;   // 矩形中點x座標
-        double recY = 0;   // 矩形中點y座標
+        //dp: 檢測圓心的累加器圖像與源圖像之間的比值倒數
+        //minDist：檢測到的圓的圓心之間的最小距離
+        //param1：method設置的檢測方法對應參數，針對HOUGH_GRADIENT，表示邊緣檢測算子的高閾值（低閾值是高閾值的一半），默認值100
+        //param2：method設置的檢測方法對應參數，針對HOUGH_GRADIENT，表示累加器的閾值。值越小，檢測到的無關的圓
+        //minRadius：圓半徑的最小半徑，默認為0
+        //maxRadius：圓半徑的最大半徑，默認為0（若minRadius和maxRadius都默認為0，則HoughCircles函數會自動計算半徑）
 
-        for (int i = 0; i < contours.size(); i++){
-            MatOfPoint contour = contours.get(i);
-            double area = Imgproc.contourArea(contour);
+        List<Integer> radius = new ArrayList<>();
+        List<Double> pixelX = new ArrayList<>();
+        List<Double> pixelY = new ArrayList<>();
 
-            if (area > 300){                                                                        // 300要視情況做調整，取出要的圖形面積範圍
-                MatOfPoint2f contour2f = new MatOfPoint2f(contours.get(i).toArray());
-                double approxDistance = Imgproc.arcLength(contour2f, true) * 0.02;                // 0.02 可調整
-                if (approxDistance > 1){                                                          // 不知道要判斷甚麼XD
-                    Imgproc.approxPolyDP(contour2f, approxCurve, approxDistance, true);         // 將結果存到 approxCurve
-                    MatOfPoint points = new MatOfPoint(approxCurve.toArray());                  // 將型態轉回MatOfPOint
-                    if (points.total() == 4 && Math.abs(Imgproc.contourArea(points)) > 500 && Imgproc.isContourConvex(points)){    // 判斷矩形，最後一個不知到是啥?
-                        Rect rect = Imgproc.boundingRect(points);
-                        recX = rect.x + rect.width/2;
-                        recY = rect.y + rect.height/2;
-                    }
-                }
-                break;
+        for(int i = 0; i<circles.cols();i++){
+            double [] vCircles = circles.get(0, 1);
+
+            pixelX.add(vCircles[0]);
+            pixelY.add(vCircles[1]);
+            radius.add((int)Math.round(vCircles[2]));
+        }
+
+        int max_radius = radius.get(0);
+        int index = 0;
+
+        for(int i = 0;i < radius.size();i++){
+            if(max_radius<radius.get(i)){
+                max_radius = radius.get(i);
+                index = i;
             }
         }
 
-        double errorX = 480 - recX;
-        double errorY = 640 - recY;
-        Log.println((int) errorY,"errorY","This is errorY");
-        Log.println((int) errorX,"errorX","This is errorX");
+        double proportion = max_radius / 0.05 ;
+        double errorX = (pixelX.get(index) - 640) / proportion;
+        double errorY = (pixelY.get(index) - 480) / proportion;
 
-        double Z = api.getRobotKinematics().getPosition().getZ();
-        Point PE = new Point(errorX, errorY, Z);
-        Quaternion Q = api.getRobotKinematics().getOrientation();
-        api.moveTo(PE, Q, false);
+        double x = errorX;
+        double y = api.getRobotKinematics().getPosition().getY();
+        double z = errorY;
+        Point p = new Point(x, y, z);
+        Quaternion q = api.getRobotKinematics().getOrientation();
+        api.relativeMoveTo(p, q, false);
+
     }
 
     private void waiting() {
@@ -181,6 +191,12 @@ public class YourService extends KiboRpcService {
         } catch (Exception ignored) {
         }
 
+    }
+
+    private void aimLaser(){
+        Point pi = new Point(0.1, api.getRobotKinematics().getPosition().getY(), -0.05);
+        Quaternion qi = api.getRobotKinematics().getOrientation();
+        api.relativeMoveTo(pi, qi, false);
     }
 
 

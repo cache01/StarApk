@@ -29,18 +29,24 @@ public class YourService extends KiboRpcService {
         //cam(10.71, -7.7, 4.4)
         Quaternion Q1 = new Quaternion(0f, (float)angle, 0f, (float)angle);
         api.moveTo(P1, Q1, false);
+        Log.d("The star is at", "move to p1");
+
         api.reportPoint1Arrival();
         waiting();
 
         try {
-            Log.d("The star is at", "aim second time");
+            Log.d("The star is at", "aim first time");
             aim("target1");
         }catch (Exception ignored){
+            Log.d("The star is at", "aim first time");
+
         }
         try {
             Log.d("The star is at", "aim second time");
             aim("target1");
         }catch (Exception ignored){
+            Log.d("The star is at", "aim second time");
+
         }
         waiting();
 
@@ -68,6 +74,7 @@ public class YourService extends KiboRpcService {
         //11.17460,     ,5.29881
         Quaternion Q2 = new Quaternion(0f, 0f, (float)-angle, (float)angle);
         specificMoveTo(P2,Q2,"z");
+        Log.d("The star is at", "move to p2");
         api.moveTo(P2, Q2, false);
         waiting();
 
@@ -75,18 +82,23 @@ public class YourService extends KiboRpcService {
             Log.d("The star is at", "aim first time");
             aim("target2");
         }catch (Exception ignored){
+            Log.d("The star is at", "aim first time");
+
         }
         waiting();
         try {
-            Log.d("The star is at", "aim first time");
+            Log.d("The star is at", "aim second time");
             aim("target2");
         }catch (Exception ignored){
+            Log.d("The star is at", "aim second time");
+
         }
         waiting();
         try {
-            Log.d("The star is at", "aim first time");
+            Log.d("The star is at", "aim third time");
             aim("target2");
         }catch (Exception ignored){
+            Log.d("The star is at", "aim third crash");
         }
         waiting();
 
@@ -104,6 +116,8 @@ public class YourService extends KiboRpcService {
 
         //move to gaol position
         Point PG = new Point(11.27460, -7.89178, 4.96538);
+        Log.d("The star is at", "move to pG");
+
         api.moveTo(PG, QG, false);
         takePicture("goal");
         api.reportMissionCompletion();

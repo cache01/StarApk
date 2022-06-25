@@ -27,65 +27,53 @@ public class YourService extends KiboRpcService {
         Point P1 = new Point(10.71f, -7.76f, 4.4f);
         //cam(10.71, -7.7, 4.4)
         Quaternion Q1 = new Quaternion(0f, (float)angle, 0f, (float)angle);
-        specificMoveTo(P1, Q1, "y");
+        api.moveTo(P1, Q1, false);
+        api.reportPoint1Arrival();
         waiting();
-        try {
-            Log.d("The star is at", "aim first time");
-            aim("target1");
-        }catch (Exception ignored){
-        }
-        waiting();
+
         try {
             Log.d("The star is at", "aim second time");
             aim("target1");
         }catch (Exception ignored){
         }
         waiting();
+
         aimLaser("target1");
+        takePicture("target1");
         waiting();
-        //shot and take picture
-        api.reportPoint1Arrival();
-        api.laserControl(true);
-        api.takeTarget1Snapshot();
-        takePicture("target_1");
-        api.laserControl(false);
+
         //move to S1
         //Point S1 = new Point(10.68068,-8.37976,5.29881);
         Point S1 = new Point(10.68068,-8.37976,5.29881);
         Quaternion QS1 = new Quaternion(0f, 0f, (float)-angle, (float)angle);
         api.moveTo(S1, QS1, false);
         //MoveTo(S1, QS1,"z");
-//move to S2
-//Point S2 = new Point(10.79276,-10,5.29981);
+
+        //move to S2
+        //Point S2 = new Point(10.79276,-10,5.29981);
         Point S2 = new Point(10.68068,-9.2,5.4325);
         Quaternion QS2 = new Quaternion(0f, 0f, (float)-angle, (float)angle);
         api.moveTo(S2, QS2, false);
         //MoveTo(S2,QS2,"z");
+
         //move to point 2
         Point P2 = new Point(11.21360,-10,5.4325);
         //11.17460,     ,5.29881
         Quaternion Q2 = new Quaternion(0f, 0f, (float)-angle, (float)angle);
-        specificMoveTo(P2, Q2,"z");
+        api.moveTo(P2, Q2, false);
         waiting();
+
         try {
             Log.d("The star is at", "aim first time");
             aim("target2");
         }catch (Exception ignored){
         }
         waiting();
-        try {
-            Log.d("The star is at", "aim second time");
-            aim("target2");
-        }catch (Exception ignored){
-        }
-        waiting();
+
         aimLaser("target2");
+        takePicture("target2");
         waiting();
-        //shot and take picture
-        api.laserControl(true);
-        api.takeTarget2Snapshot();
-        takePicture("target_2");
-        api.laserControl(false);
+
         //p2 - s2 - s1
         Quaternion QG = new Quaternion(0f, 0f, (float)-angle, (float)angle);
         api.moveTo(S2, QG, false);
@@ -94,11 +82,9 @@ public class YourService extends KiboRpcService {
         //MoveTo(S1, QG,"z");
         //move to gaol position
         Point PG = new Point(11.27460, -7.89178, 4.96538);
-        specificMoveTo(PG, QG,"z");
+        api.moveTo(PG, QG, false);
         takePicture("goal");
         api.reportMissionCompletion();
-
-
     }
 
 
@@ -157,7 +143,20 @@ public class YourService extends KiboRpcService {
             Thread.sleep(300);
         } catch (Exception ignored) {
         }
+    }
 
+    private void Laser(String s){
+        api.laserControl(true);
+        switch (s){
+            case "target1":
+                api.takeTarget1Snapshot();
+                break;
+            case "target2":
+                api.takeTarget2Snapshot();
+                break;
+        }
+
+        api.laserControl(false);
     }
 
     private void aim(String mode) {
@@ -235,6 +234,8 @@ public class YourService extends KiboRpcService {
                 api.relativeMoveTo(pj2, qj2, false);
                 break;
         }
+        Laser(mode);
+
     }
 
 

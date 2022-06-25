@@ -52,6 +52,14 @@ public class YourService extends KiboRpcService {
         specificMoveTo(p2, Q2, "Z");
         waiting();
 
+        try{
+            aim();
+        }catch (Exception ignored){}
+
+        waiting();;
+        aimLaser();;
+        waiting();
+
         //shot and take picture
         api.laserControl(true);
         api.takeTarget2Snapshot();
@@ -136,13 +144,14 @@ public class YourService extends KiboRpcService {
         Mat img = api.getMatNavCam();
         Mat gray = new Mat();
 
-        takePicture("aiming");
+        takePicture("when aiming");
 
         Imgproc.cvtColor(img, gray, Imgproc.COLOR_RGB2GRAY);
-
+        api.saveMatImage(img, "src");
+        api.saveMatImage(gray, "gray image");
         Mat circles = new Mat();
         Imgproc.HoughCircles(gray, circles, Imgproc.HOUGH_GRADIENT, 1, 100, 440, 50, 0, 345);
-
+        api.saveMatImage(circles, "after Hough");
         //dp: 檢測圓心的累加器圖像與源圖像之間的比值倒數
         //minDist：檢測到的圓的圓心之間的最小距離
         //param1：method設置的檢測方法對應參數，針對HOUGH_GRADIENT，表示邊緣檢測算子的高閾值（低閾值是高閾值的一半），默認值100

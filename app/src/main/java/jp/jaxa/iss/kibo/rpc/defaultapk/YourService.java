@@ -22,7 +22,7 @@ public class YourService extends KiboRpcService {
 
         //move P1 - S1 - S2 - P2 - S2 - goal position
         double angle = Math.sqrt(2)/2;
-        
+
         //move to point 1
         Point P1 = new Point(10.71f, -7.76f, 4.4f);
         //cam(10.71, -7.7, 4.4)

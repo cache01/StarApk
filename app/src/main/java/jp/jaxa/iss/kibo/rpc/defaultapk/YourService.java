@@ -2,7 +2,11 @@ package jp.jaxa.iss.kibo.rpc.defaultapk;
 
 import android.util.Log;
 import org.opencv.core.Mat;
+import org.opencv.core.Scalar;
+import org.opencv.imgproc.Imgproc;
 
+
+import java.util.ArrayList;
 
 import gov.nasa.arc.astrobee.types.Point;
 import gov.nasa.arc.astrobee.types.Quaternion;
@@ -25,7 +29,10 @@ public class YourService extends KiboRpcService {
         api.moveTo(P1, Q1, false);
         api.reportPoint1Arrival();
         waiting();
-        
+
+        aimLaser("target1");
+        waiting();
+
         //shot and take picture
         api.laserControl(true);
         api.takeTarget1Snapshot();
@@ -51,6 +58,19 @@ public class YourService extends KiboRpcService {
         Quaternion Q2 = new Quaternion(0f, 0f, (float) -angle, (float) angle);
         api.moveTo(P2,Q2, false);
         waiting();
+
+        try {
+            aim();
+            Mat img = api.getMatNavCam();
+            api.saveMatImage(img, "aim success");
+            waiting();
+        }catch (Exception ignored){
+            Mat correct = api.getMatNavCam();
+            api.saveMatImage(correct, "aim crash");
+        }
+        aimLaser("target2");
+        waiting();
+
 
         //shot and take picture
         api.laserControl(true);
@@ -87,8 +107,7 @@ public class YourService extends KiboRpcService {
 
 
     private void aimLaser(String mode) {
-        Point p;
-        Quaternion q;
+
 
         switch (mode) {
             case "target1":
@@ -98,11 +117,63 @@ public class YourService extends KiboRpcService {
 
                 break;
             case "target2":
-                Point pj2 = new Point(-0.08, api.getRobotKinematics().getPosition().getY(), 0.07);
+                Point pj2 = new Point(-0.1, api.getRobotKinematics().getPosition().getY(), 0.05);
                 Quaternion qj2 = api.getRobotKinematics().getOrientation();
                 api.relativeMoveTo(pj2, qj2, false);
                 break;
         }
+    }
+
+    private void aim(){
+        Mat img = api.getMatNavCam();
+        api.saveMatImage(img, "aim start");
+        //Mat gray = new Mat();
+        //Imgproc.cvtColor(img, gray, Imgproc.COLOR_BGR2GRAY);
+        Imgproc.medianBlur(img, img, 3);
+        api.saveMatImage(img, "blur success");
+        Mat circles = new Mat();
+        Imgproc.HoughCircles(img, circles, Imgproc.HOUGH_GRADIENT, 1,
+                (double)img.rows()/16, 300, 30, 20, 70);
+        api.saveMatImage(img, "find circle success");
+        ArrayList<Integer> radius = new ArrayList<>();
+        ArrayList<Double> pixelX = new ArrayList<>();
+        ArrayList<Double> pixelY = new ArrayList<>();
+        for (int i=0;
+             i < circles.cols();
+             i++){
+            double[] vCircle = circles.get(0, i);
+            pixelX.add(vCircle[0]);
+            pixelY.add(vCircle[1]);
+            radius.add((int) Math.round(vCircle[2]));
+            int Radius = (int)Math.round(vCircle[2]);
+            org.opencv.core.Point center = new org.opencv.core.Point(vCircle[0],
+                    vCircle[1]);
+            Imgproc.circle(img, center, Radius, new Scalar(0, 255, 0), 3, 8, 0);
+            api.saveMatImage(img, "circle" + i);
+        }
+        api.saveMatImage(img, "get circle value success");
+        int max_radius = radius.get(0);
+        int index = 0;
+        for (int i=0;
+             i < radius.size();
+             i++){
+            if (max_radius < radius.get(i)) {
+                max_radius = radius.get(i);
+                index = i;
+            }
+        }
+        api.saveMatImage(img, "find biggest circle success");
+        double proportion = (double)max_radius / 0.05 ;
+        double errorX = (pixelX.get(index) - 640) / proportion;
+        double errorY = (pixelY.get(index) - 480) / proportion;
+        double x2 = errorX;
+        double y2 = api.getRobotKinematics().getPosition().getY();
+        double z2 = errorY;
+        api.saveMatImage(img, "adjust position success");
+        Point p2 = new Point(x2, y2, z2);
+        Quaternion q2 = api.getRobotKinematics().getOrientation();
+        api.relativeMoveTo(p2, q2, false);
+        api.saveMatImage(img, "aim end");
     }
 
 

@@ -15,37 +15,29 @@ import jp.jaxa.iss.kibo.rpc.api.KiboRpcService;
  */
 
 public class YourService extends KiboRpcService {
+    public static Mat image ;
     @Override
     protected void runPlan1() {
         api.startMission();
-        //S1 (10.68068,-8.37976,5.29881)
-        //S2 (10.68068,-9.2,5.4325)
-        //move P1 - S1 - S2 - P2 - S2 - goal position
         double angle = Math.sqrt(2) / 2;
-        //Point B = new Point(10.71f, -7.76f, 4.5f);
-        //Quaternion QB = new Quaternion(0f, (float)angle, 0f, (float)angle);
-        //api.moveTo(B, QB, false);
-        //move to point 1
+
+        //P1
         Point P1 = new Point(10.71f, -7.76f, 4.4f);
         //cam(10.71, -7.7, 4.4)
         Quaternion Q1 = new Quaternion(0f, (float) angle, 0f, (float) angle);
         //specificMoveTo(P1, Q1, "y");
         api.moveTo(P1, Q1, false);
         api.reportPoint1Arrival();
+
+        //aiming Target1
         waiting();
         try {
-            Log.d("The star is at", "aim first time");
-            aim("target1");
+            aimLaser("target1");
+            api.saveMatImage(api.getMatNavCam(), "T1 success");
         } catch (Exception ignored) {
+            api.saveMatImage(api.getMatNavCam(),"crash target1 first");
         }
-        waiting();
-        try {
-            Log.d("The star is at", "aim second time");
-            aim("target1");
-        } catch (Exception ignored) {
-        }
-        waiting();
-        aimLaser("target1");
+
         waiting();
         //shot and take picture
         api.laserControl(true);
@@ -53,18 +45,20 @@ public class YourService extends KiboRpcService {
         takePicture("target_1");
         api.laserControl(false);
         waiting();
+
+
         //move to S1
         //Point S1 = new Point(10.68068,-8.37976,5.29881);
         Point S1 = new Point(10.55068, -8.37976, 5.4325);
         Quaternion QS1 = new Quaternion(0f, 0f, (float) -angle, (float) angle);
         api.moveTo(S1, QS1, false);
-        //MoveTo(S1, QS1,"z");
+
         //move to S2
         //Point S2 = new Point(10.79276,-10,5.29981);
         Point S2 = new Point(10.55068, -9.35, 5.4325);
         Quaternion QS2 = new Quaternion(0f, 0f, (float) -angle, (float) angle);
         api.moveTo(S2, QS2, false);
-        //MoveTo(S2,QS2,"z");
+
         //move to point 2
         Point P2 = new Point(11.21360, -10, 5.4325);
         //11.17460,     ,5.29881
@@ -72,44 +66,35 @@ public class YourService extends KiboRpcService {
         //specificMoveTo(P2, Q2,"z");
         api.moveTo(P2, Q2, false);
         waiting();
-        Mat img = api.getMatNavCam();
-        Mat gray = new Mat();
-        Imgproc.cvtColor(img, gray, Imgproc.COLOR_RGB2GRAY);
-
-        Imgproc.medianBlur(gray, gray, 3);
-        Mat circles = new Mat();
-        Imgproc.HoughCircles(gray, circles, Imgproc.HOUGH_GRADIENT, 1, 0, 300, 30, 40, 70);
 
         try {
-            Log.d("The star is at", "aim first time");
-            aim("target2");
+            aimLaser("target2");
+            api.saveMatImage(api.getMatNavCam(), "T2 success");
         } catch (Exception ignored) {
+            api.saveMatImage(api.getMatNavCam(),"crash target2 first");
         }
         waiting();
-        try {
-            Log.d("The star is at", "aim second time");
-            aim("target2");
-        } catch (Exception ignored) {
-        }
-        waiting();
-        aimLaser("target2");
-        waiting();
+
         //shot and take picture
         api.laserControl(true);
         api.takeTarget2Snapshot();
         takePicture("target_2");
         api.laserControl(false);
-        //p2 - s2 - s1
+
+        //p2 - s2
         Quaternion QG = new Quaternion(0f, 0f, (float) -angle, (float) angle);
         api.moveTo(S2, QG, false);
         //api.moveTo(S1, QG, false);
         //MoveTo(S2, QG,"z");
         //MoveTo(S1, QG,"z");
+
         //move to gaol position
         Point PG = new Point(11.27460, -7.89178, 4.96538);
         specificMoveTo(PG, QG, "z");
         takePicture("goal");
         api.reportMissionCompletion();
+
+
     }
 
         private void specificMoveTo (Point p, Quaternion q, String mode) {
@@ -155,10 +140,11 @@ public class YourService extends KiboRpcService {
         }while(error_pos > tolerance && time2 < 3);
     }
 
-    private void takePicture(String tag) {
+    public void takePicture(String tag) {
         Mat image = api.getMatNavCam();
         api.saveMatImage(image, tag);
     }
+
 
     private void waiting() {
         try {
@@ -198,11 +184,11 @@ public class YourService extends KiboRpcService {
         //org.opencv.core.Point center = new org.opencv.core.Point(vCircle[0], vCircle[1]);
         //int Radius = (int) Math.round(vCircle[2]);
         //Imgproc.circle(gray, center, Radius, new Scalar(0, 255, 0), 3, 8,0);
-        pixelX.add(new Double(vCircle[0]));
-        pixelY.add(new Double(vCircle[1]));
-        radius.add(new Integer((int) Math.round(vCircle[2])));
+        pixelX.add((vCircle[0]));
+        pixelY.add((vCircle[1]));
+        radius.add((int) Math.round(vCircle[2])) ;
         Log.d("The star is at", "find" + i + "circles");
-    }
+        }
         //api.saveMatImage(gray, "gray");
         int max_radius = radius.get(0);
         int index = 0;
@@ -244,13 +230,35 @@ public class YourService extends KiboRpcService {
 
 
     private void aimLaser(String mode) {
+        Point p;
+        Quaternion q;
+
         switch (mode) {
             case "target1":
+                Mat src1 = api.getMatNavCam();
+                double x1 = MainActivity.Cul(src1)[1];
+                double y1 = MainActivity.Cul(src1)[0];
+
+                p = new Point(x1,y1, api.getRobotKinematics().getPosition().getZ());
+                q = api.getRobotKinematics().getOrientation();
+
+                api.relativeMoveTo(p,q,false);
+
                 Point pj1 = new Point(0.05, -0.1, api.getRobotKinematics().getPosition().getZ());
                 Quaternion qj1 = api.getRobotKinematics().getOrientation();
                 api.relativeMoveTo(pj1, qj1, false);
+
                 break;
             case "target2":
+                Mat src2 = api.getMatNavCam();
+                double x2 = MainActivity.Cul(src2)[0];
+                double z2 = MainActivity.Cul(src2)[1];
+
+                p = new Point(x2, api.getRobotKinematics().getPosition().getY(), z2);
+                q = api.getRobotKinematics().getOrientation();
+
+                api.relativeMoveTo(p, q, false);
+
                 Point pj2 = new Point(-0.08, api.getRobotKinematics().getPosition().getY(), 0.07);
                 Quaternion qj2 = api.getRobotKinematics().getOrientation();
                 api.relativeMoveTo(pj2, qj2, false);

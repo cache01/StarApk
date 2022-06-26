@@ -75,9 +75,8 @@ public class YourService extends KiboRpcService {
 
         private void specificMoveTo (Point p, Quaternion q, String mode) {
         double axile = 0;
-        Point robotPos, output;
-        double tolerance = 0.3d;
-        double error_pos, error_rotate;
+        double tolerance = 0.05d;
+        double error_pos;
         double error_posX, error_posY, error_posZ;
         int time1 = 0;
         int time2 = 0;

@@ -2,10 +2,7 @@ package jp.jaxa.iss.kibo.rpc.defaultapk;
 
 import android.util.Log;
 import org.opencv.core.Mat;
-import org.opencv.core.Scalar;
-import org.opencv.imgproc.Imgproc;
-import java.util.ArrayList;
-import java.util.List;
+
 
 import gov.nasa.arc.astrobee.types.Point;
 import gov.nasa.arc.astrobee.types.Quaternion;
@@ -15,7 +12,6 @@ import jp.jaxa.iss.kibo.rpc.api.KiboRpcService;
  */
 
 public class YourService extends KiboRpcService {
-    public static Mat image ;
     @Override
     protected void runPlan1() {
         api.startMission();

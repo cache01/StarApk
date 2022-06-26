@@ -8,6 +8,7 @@ import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
 
+import gov.nasa.arc.astrobee.Robot;
 import gov.nasa.arc.astrobee.types.Point;
 import gov.nasa.arc.astrobee.types.Quaternion;
 import jp.jaxa.iss.kibo.rpc.api.KiboRpcService;
@@ -58,6 +59,11 @@ public class YourService extends KiboRpcService {
         Quaternion Q2 = new Quaternion(0f, 0f, (float) -angle, (float) angle);
         api.moveTo(P2,Q2, false);
         waiting();
+        api.saveMatImage(api.getMatNavCam(), "before X = "+api.getRobotKinematics().getPosition().getX());
+        api.saveMatImage(api.getMatNavCam(), "before Y = "+api.getRobotKinematics().getPosition().getY());
+        api.saveMatImage(api.getMatNavCam(), "before Z = "+api.getRobotKinematics().getPosition().getX());
+
+
 
         try {
             aim();
@@ -133,46 +139,51 @@ public class YourService extends KiboRpcService {
         api.saveMatImage(img, "blur success");
         Mat circles = new Mat();
         Imgproc.HoughCircles(img, circles, Imgproc.HOUGH_GRADIENT, 1,
-                (double)img.rows()/16, 300, 30, 20, 70);
+                (double)img.rows()/16, 300, 30, 20, 50);
         api.saveMatImage(img, "find circle success");
         ArrayList<Integer> radius = new ArrayList<>();
         ArrayList<Double> pixelX = new ArrayList<>();
         ArrayList<Double> pixelY = new ArrayList<>();
-        for (int i=0;
-             i < circles.cols();
-             i++){
+        for (int i=0; i < circles.cols(); i++){
             double[] vCircle = circles.get(0, i);
             pixelX.add(vCircle[0]);
             pixelY.add(vCircle[1]);
             radius.add((int) Math.round(vCircle[2]));
             int Radius = (int)Math.round(vCircle[2]);
-            org.opencv.core.Point center = new org.opencv.core.Point(vCircle[0],
-                    vCircle[1]);
+            org.opencv.core.Point center = new org.opencv.core.Point(vCircle[0], vCircle[1]);
             Imgproc.circle(img, center, Radius, new Scalar(0, 255, 0), 3, 8, 0);
             api.saveMatImage(img, "circle" + i);
         }
+
         api.saveMatImage(img, "get circle value success");
         int max_radius = radius.get(0);
         int index = 0;
-        for (int i=0;
-             i < radius.size();
-             i++){
+        for (int i=0; i < radius.size(); i++){
             if (max_radius < radius.get(i)) {
                 max_radius = radius.get(i);
                 index = i;
             }
         }
+        api.saveMatImage(img, "pixelX.get(index)"+ pixelX.get(index));
+        api.saveMatImage(img, "pixelY.get(index)"+ pixelY.get(index));
+        api.saveMatImage(img, "max_rasius:"+max_radius);
         api.saveMatImage(img, "find biggest circle success");
         double proportion = (double)max_radius / 0.05 ;
         double errorX = (pixelX.get(index) - 640) / proportion;
         double errorY = (pixelY.get(index) - 480) / proportion;
+        api.saveMatImage(img, "errorX"+errorX);
+        api.saveMatImage(img, "errorY"+errorY);
         double x2 = errorX;
         double y2 = api.getRobotKinematics().getPosition().getY();
         double z2 = errorY;
         api.saveMatImage(img, "adjust position success");
-        Point p2 = new Point(x2, y2, z2);
+        Point p2 = new Point(api.getRobotKinematics().getPosition().getX()+x2, y2, api.getRobotKinematics().getPosition().getZ()+z2);
         Quaternion q2 = api.getRobotKinematics().getOrientation();
-        api.relativeMoveTo(p2, q2, false);
+        api.moveTo(p2, q2, false);
+
+        api.saveMatImage(api.getMatNavCam(), "after X = "+api.getRobotKinematics().getPosition().getX());
+        api.saveMatImage(api.getMatNavCam(), "after Y = "+api.getRobotKinematics().getPosition().getY());
+        api.saveMatImage(api.getMatNavCam(), "after Z = "+api.getRobotKinematics().getPosition().getX());
         api.saveMatImage(img, "aim end");
     }
 

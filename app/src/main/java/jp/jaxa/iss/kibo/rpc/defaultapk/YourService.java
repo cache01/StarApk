@@ -211,7 +211,6 @@ public class YourService extends KiboRpcService {
         waiting();
         //api.moveTo(p2, q2, false);
         //specificMoveTo(p2,q2);
-
         api.saveMatImage(api.getMatNavCam(), "after X = "+api.getRobotKinematics().getPosition().getX());
         api.saveMatImage(api.getMatNavCam(), "after Y = "+api.getRobotKinematics().getPosition().getY());
         api.saveMatImage(api.getMatNavCam(), "after Z = "+api.getRobotKinematics().getPosition().getX());

@@ -24,9 +24,8 @@ public class YourService extends KiboRpcService {
         //specificMoveTo(P1, Q1, "y");
         api.moveTo(P1, Q1, false);
         api.reportPoint1Arrival();
-
-        aimLaser("target");
         waiting();
+        
         //shot and take picture
         api.laserControl(true);
         api.takeTarget1Snapshot();
@@ -71,48 +70,6 @@ public class YourService extends KiboRpcService {
         api.reportMissionCompletion();
 
 
-    }
-
-        private void specificMoveTo (Point p, Quaternion q, String mode) {
-        double axile = 0;
-        double tolerance = 0.05d;
-        double error_pos;
-        double error_posX, error_posY, error_posZ;
-        int time1 = 0;
-        int time2 = 0;
-        Log.d("startfrom", api.getRobotKinematics().getPosition().toString());
-        api.moveTo(p, q, false);
-        waiting();
-        Point P = api.getRobotKinematics().getPosition();
-        do {
-            switch (mode) {
-                case "x":
-                    axile = api.getRobotKinematics().getOrientation().getX();
-                    break;
-                case "y":
-                    axile = api.getRobotKinematics().getOrientation().getY();
-                    break;
-                case "z":
-                    axile = api.getRobotKinematics().getOrientation().getZ();
-                    break;
-            }
-            api.moveTo(P, q, false);
-            time1++;
-        } while (Math.abs(axile - Math.sqrt(2) / 2) > 0.001 && time1 < 3);
-        Quaternion Q = api.getRobotKinematics().getOrientation();
-        do {
-            double currentX = api.getRobotKinematics().getPosition().getX();
-            double currentY = api.getRobotKinematics().getPosition().getY();
-            double currentZ = api.getRobotKinematics().getPosition().getZ();
-            error_pos = Math.abs(p.getX() - currentX) + Math.abs(p.getY() -
-                    currentY) + Math.abs(p.getZ() - currentZ);
-            error_posX = Math.abs(p.getX() - currentX);
-            error_posY = Math.abs(p.getY() - currentY);
-            error_posZ = Math.abs(p.getZ() - currentZ);
-            api.relativeMoveTo(new Point(error_posX, error_posY, error_posZ), Q,
-                    false);
-            time2 ++;
-        }while(error_pos > tolerance && time2 < 3);
     }
 
     public void takePicture(String tag) {

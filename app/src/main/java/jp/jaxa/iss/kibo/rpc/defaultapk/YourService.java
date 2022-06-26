@@ -35,7 +35,6 @@ public class YourService extends KiboRpcService {
         waiting();
 
 
-        //move to S1
         //Point S1 = new Point(10.68068,-8.37976,5.29881);
         Point S1 = new Point(10.55068, -8.37976, 5.4325);
         Quaternion QS1 = new Quaternion(0f, 0f, (float) -angle, (float) angle);
@@ -51,7 +50,7 @@ public class YourService extends KiboRpcService {
         Point P2 = new Point(11.21360, -10, 5.4825);
         //11.17460,     ,5.29881
         Quaternion Q2 = new Quaternion(0f, 0f, (float) -angle, (float) angle);
-        specificMoveTo(P2, Q2,"z");
+        api.moveTo(P2,Q2, false);
         waiting();
 
         //shot and take picture
@@ -66,7 +65,7 @@ public class YourService extends KiboRpcService {
 
         //move to gaol position
         Point PG = new Point(11.27460, -7.89178, 4.96538);
-        specificMoveTo(PG, QG, "z");
+        api.moveTo(PG,QG,false);
         takePicture("goal");
         api.reportMissionCompletion();
 

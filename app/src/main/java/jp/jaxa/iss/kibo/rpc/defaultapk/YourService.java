@@ -61,7 +61,7 @@ public class YourService extends KiboRpcService {
         waiting();
         api.saveMatImage(api.getMatNavCam(), "before X = "+api.getRobotKinematics().getPosition().getX());
         api.saveMatImage(api.getMatNavCam(), "before Y = "+api.getRobotKinematics().getPosition().getY());
-        api.saveMatImage(api.getMatNavCam(), "before Z = "+api.getRobotKinematics().getPosition().getX());
+        api.saveMatImage(api.getMatNavCam(), "before Z = "+api.getRobotKinematics().getPosition().getZ());
 
 
 
@@ -120,14 +120,40 @@ public class YourService extends KiboRpcService {
                 Point pj1 = new Point(0.05, -0.1, api.getRobotKinematics().getPosition().getZ());
                 Quaternion qj1 = api.getRobotKinematics().getOrientation();
                 api.relativeMoveTo(pj1, qj1, false);
-
                 break;
             case "target2":
-                Point pj2 = new Point(-0.1, api.getRobotKinematics().getPosition().getY(), 0.05);
+                Point pj2 = new Point(api.getRobotKinematics().getPosition().getX()-0.1, api.getRobotKinematics().getPosition().getY(), api.getRobotKinematics().getPosition().getZ()+0.05);
                 Quaternion qj2 = api.getRobotKinematics().getOrientation();
-                api.relativeMoveTo(pj2, qj2, false);
+                //specificMoveTo(pj2, qj2);
+                api.moveTo(pj2,qj2,false);
                 break;
         }
+    }
+
+    private void specificMoveTo (Point p, Quaternion q) {
+        double axile = 0;
+        double tolerance = 0.05d;
+        double error_pos;
+        double error_posX, error_posY, error_posZ;
+        int time1 = 0;
+        int time2 = 0;
+        Log.d("startfrom", api.getRobotKinematics().getPosition().toString());
+        api.moveTo(p, q, false);
+        waiting();
+
+        Quaternion Q = api.getRobotKinematics().getOrientation();
+        do {
+            double currentX = api.getRobotKinematics().getPosition().getX();
+            double currentY = api.getRobotKinematics().getPosition().getY();
+            double currentZ = api.getRobotKinematics().getPosition().getZ();
+            error_pos = Math.abs(p.getX() - currentX) + Math.abs(p.getY() -
+                    currentY) + Math.abs(p.getZ() - currentZ);
+            error_posX = Math.abs(p.getX() - currentX);
+            error_posY = Math.abs(p.getY() - currentY);
+            error_posZ = Math.abs(p.getZ() - currentZ);
+            api.relativeMoveTo(new Point(error_posX, error_posY, error_posZ), Q, false);
+            time2 ++;
+        }while(error_pos > tolerance && time2 < 3);
     }
 
     private void aim(){
@@ -179,6 +205,9 @@ public class YourService extends KiboRpcService {
         api.saveMatImage(img, "adjust position success");
         Point p2 = new Point(api.getRobotKinematics().getPosition().getX()+x2, y2, api.getRobotKinematics().getPosition().getZ()+z2);
         Quaternion q2 = api.getRobotKinematics().getOrientation();
+        //specificMoveTo(p2,q2);
+        //api.relativeMoveTo(p2,q2,false);
+        waiting();
         api.moveTo(p2, q2, false);
 
         api.saveMatImage(api.getMatNavCam(), "after X = "+api.getRobotKinematics().getPosition().getX());

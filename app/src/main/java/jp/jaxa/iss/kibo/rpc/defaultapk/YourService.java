@@ -28,6 +28,7 @@ public class YourService extends KiboRpcService {
         Quaternion Q1 = new Quaternion(0f, (float) angle, 0f, (float) angle);
         //specificMoveTo(P1, Q1, "y");
         api.moveTo(P1, Q1, false);
+        waiting();
         api.reportPoint1Arrival();
         waiting();
 
@@ -74,7 +75,7 @@ public class YourService extends KiboRpcService {
             Mat correct = api.getMatNavCam();
             api.saveMatImage(correct, "aim crash");
         }
-        aimLaser("target2");
+        //aimLaser("target2");
         waiting();
 
 
@@ -125,7 +126,7 @@ public class YourService extends KiboRpcService {
                 Point pj2 = new Point(api.getRobotKinematics().getPosition().getX()-0.1, api.getRobotKinematics().getPosition().getY(), api.getRobotKinematics().getPosition().getZ()+0.05);
                 Quaternion qj2 = api.getRobotKinematics().getOrientation();
                 //specificMoveTo(pj2, qj2);
-                api.moveTo(pj2,qj2,false);
+                //api.moveTo(pj2,qj2,false);
                 break;
         }
     }
@@ -199,16 +200,17 @@ public class YourService extends KiboRpcService {
         double errorY = (pixelY.get(index) - 480) / proportion;
         api.saveMatImage(img, "errorX"+errorX);
         api.saveMatImage(img, "errorY"+errorY);
-        double x2 = errorX;
-        double y2 = api.getRobotKinematics().getPosition().getY();
+        double x2 = api.getRobotKinematics().getPosition().getX();
+        double y2 = errorX;
         double z2 = errorY;
         api.saveMatImage(img, "adjust position success");
-        Point p2 = new Point(api.getRobotKinematics().getPosition().getX()+x2, y2, api.getRobotKinematics().getPosition().getZ()+z2);
+        //Point p2 = new Point(api.getRobotKinematics().getPosition().getX()+x2, y2, api.getRobotKinematics().getPosition().getZ()+z2);
+                Point p2 = new Point(x2, y2, z2);
         Quaternion q2 = api.getRobotKinematics().getOrientation();
-        //specificMoveTo(p2,q2);
-        //api.relativeMoveTo(p2,q2,false);
+        api.relativeMoveTo(p2,q2,false);
         waiting();
-        api.moveTo(p2, q2, false);
+        //api.moveTo(p2, q2, false);
+        //specificMoveTo(p2,q2);
 
         api.saveMatImage(api.getMatNavCam(), "after X = "+api.getRobotKinematics().getPosition().getX());
         api.saveMatImage(api.getMatNavCam(), "after Y = "+api.getRobotKinematics().getPosition().getY());

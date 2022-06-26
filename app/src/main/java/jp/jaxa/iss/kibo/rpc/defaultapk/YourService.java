@@ -29,15 +29,7 @@ public class YourService extends KiboRpcService {
         api.moveTo(P1, Q1, false);
         api.reportPoint1Arrival();
 
-        //aiming Target1
-        waiting();
-        try {
-            aimLaser("target1");
-            api.saveMatImage(api.getMatNavCam(), "T1 success");
-        } catch (Exception ignored) {
-            api.saveMatImage(api.getMatNavCam(),"crash target1 first");
-        }
-
+        aimLaser("target");
         waiting();
         //shot and take picture
         api.laserControl(true);
@@ -60,19 +52,10 @@ public class YourService extends KiboRpcService {
         api.moveTo(S2, QS2, false);
 
         //move to point 2
-        Point P2 = new Point(11.21360, -10, 5.4325);
+        Point P2 = new Point(11.21360, -10, 5.4825);
         //11.17460,     ,5.29881
         Quaternion Q2 = new Quaternion(0f, 0f, (float) -angle, (float) angle);
-        //specificMoveTo(P2, Q2,"z");
-        api.moveTo(P2, Q2, false);
-        waiting();
-
-        try {
-            aimLaser("target2");
-            api.saveMatImage(api.getMatNavCam(), "T2 success");
-        } catch (Exception ignored) {
-            api.saveMatImage(api.getMatNavCam(),"crash target2 first");
-        }
+        specificMoveTo(P2, Q2,"z");
         waiting();
 
         //shot and take picture
@@ -84,9 +67,6 @@ public class YourService extends KiboRpcService {
         //p2 - s2
         Quaternion QG = new Quaternion(0f, 0f, (float) -angle, (float) angle);
         api.moveTo(S2, QG, false);
-        //api.moveTo(S1, QG, false);
-        //MoveTo(S2, QG,"z");
-        //MoveTo(S1, QG,"z");
 
         //move to gaol position
         Point PG = new Point(11.27460, -7.89178, 4.96538);
@@ -153,81 +133,6 @@ public class YourService extends KiboRpcService {
         }
     }
 
-    private void Laser(String s){
-        api.laserControl(true);
-        switch (s){
-            case "target1":
-                api.takeTarget1Snapshot();
-                break;
-            case "target2":
-                api.takeTarget2Snapshot();
-                break;
-        }
-
-        api.laserControl(false);
-    }
-
-    private void aim(String mode){
-        Mat img = api.getMatNavCam();
-        Mat gray = new Mat();
-        Imgproc.cvtColor(img, gray, Imgproc.COLOR_RGB2GRAY);
-
-        Imgproc.medianBlur(gray, gray, 3);
-        Mat circles = new Mat();
-        Imgproc.HoughCircles(gray, circles, Imgproc.HOUGH_GRADIENT, 1, 0, 300, 30, 40, 70);
-
-        ArrayList<Integer> radius = new ArrayList<>();
-        ArrayList<Double> pixelX = new ArrayList<>();
-        ArrayList<Double> pixelY = new ArrayList<>();
-        for (int i=0; i < circles.cols(); i++){
-        double[] vCircle = circles.get(0, i);
-        //org.opencv.core.Point center = new org.opencv.core.Point(vCircle[0], vCircle[1]);
-        //int Radius = (int) Math.round(vCircle[2]);
-        //Imgproc.circle(gray, center, Radius, new Scalar(0, 255, 0), 3, 8,0);
-        pixelX.add((vCircle[0]));
-        pixelY.add((vCircle[1]));
-        radius.add((int) Math.round(vCircle[2])) ;
-        Log.d("The star is at", "find" + i + "circles");
-        }
-        //api.saveMatImage(gray, "gray");
-        int max_radius = radius.get(0);
-        int index = 0;
-        for (int i=0; i < radius.size(); i++){
-            if (max_radius < radius.get(i)) {
-                max_radius = radius.get(i);
-                index = i;
-                Log.d("The star is at", i + "is the biggest");
-                Log.d("The star is at", "radius = " + max_radius);
-            }
-        }
-
-        double proportion = (double)max_radius / 0.05 ;
-        double errorX = (pixelX.get(index) - 640) / proportion;
-        double errorY = (pixelY.get(index) - 480) / proportion;
-        Log.d("The star is at", "errorX = " + errorX);
-        Log.d("The star is at", "errorY = " + errorY);
-
-        switch (mode){
-            case "target1":
-                double x1 = errorY;
-                double y1 = errorX;
-                double z1 = api.getRobotKinematics().getPosition().getZ();
-                Point p1 = new Point(x1, y1, z1);
-                Quaternion q1 = api.getRobotKinematics().getOrientation();
-                api.relativeMoveTo(p1, q1, false);
-                break;
-            case "target2":
-                double x2 = errorX;
-                double y2 = api.getRobotKinematics().getPosition().getY();
-                double z2 = errorY;
-                Point p2 = new Point(x2, y2, z2);
-                Quaternion q2 = api.getRobotKinematics().getOrientation();
-                api.relativeMoveTo(p2, q2, false);
-                break;
-
-        }
-    }
-
 
     private void aimLaser(String mode) {
         Point p;
@@ -235,30 +140,12 @@ public class YourService extends KiboRpcService {
 
         switch (mode) {
             case "target1":
-                Mat src1 = api.getMatNavCam();
-                double x1 = MainActivity.Cul(src1)[1];
-                double y1 = MainActivity.Cul(src1)[0];
-
-                p = new Point(x1,y1, api.getRobotKinematics().getPosition().getZ());
-                q = api.getRobotKinematics().getOrientation();
-
-                api.relativeMoveTo(p,q,false);
-
                 Point pj1 = new Point(0.05, -0.1, api.getRobotKinematics().getPosition().getZ());
                 Quaternion qj1 = api.getRobotKinematics().getOrientation();
                 api.relativeMoveTo(pj1, qj1, false);
 
                 break;
             case "target2":
-                Mat src2 = api.getMatNavCam();
-                double x2 = MainActivity.Cul(src2)[0];
-                double z2 = MainActivity.Cul(src2)[1];
-
-                p = new Point(x2, api.getRobotKinematics().getPosition().getY(), z2);
-                q = api.getRobotKinematics().getOrientation();
-
-                api.relativeMoveTo(p, q, false);
-
                 Point pj2 = new Point(-0.08, api.getRobotKinematics().getPosition().getY(), 0.07);
                 Quaternion qj2 = api.getRobotKinematics().getOrientation();
                 api.relativeMoveTo(pj2, qj2, false);
